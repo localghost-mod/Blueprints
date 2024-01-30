@@ -33,4 +33,7 @@
 	<!-- Options -->
 	<Fluffy.Blueprints>Blueprints</Fluffy.Blueprints>
 	<Fluffy.Blueprints.CopyKey>Copy keybinding</Fluffy.Blueprints.CopyKey>
+
+	<Localghost.Blueprints.Edit>Edit blueprint</Localghost.Blueprints.Edit>
+	<Localghost.Blueprints.EditBlueprint>Editing: {0}</Localghost.Blueprints.EditBlueprint>
 </LanguageData>

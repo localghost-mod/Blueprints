@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <ModMetaData>
-    <name>Blueprints</name>
-    <author>Fluffy</author>
-    <packageId>Fluffy.Blueprints</packageId>
+    <name>Blueprints - Forked</name>
+    <author>Localghost</author>
+    <packageId>Fluffy.Blueprints.fork</packageId>
     <description>Blueprints allow the quick construction of repetitive rooms/areas.
 
 &lt;size=28&gt;Features&lt;/size&gt;

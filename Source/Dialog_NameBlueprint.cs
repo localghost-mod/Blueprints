@@ -12,7 +12,7 @@ namespace Blueprints
             curName    = blueprint.name;
         }
 
-        protected override int MaxNameLength => 24;
+        protected override int MaxNameLength => 99;
 
         protected override AcceptanceReport NameIsValid( string newName )
         {

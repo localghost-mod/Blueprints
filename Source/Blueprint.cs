@@ -13,7 +13,7 @@ namespace Blueprints
     public class Blueprint : IExposable
     {
         // regex for valid file names. Should allow all 'normal' characters, where normal (i.e. \w) differs per localization.
-        private static readonly Regex ValidNameRegex = new Regex(@"^[\w]+$");
+        private static readonly Regex ValidNameRegex = new Regex(@"^[\w\s\(\)]+$");
 
         private List<BuildableInfo> _availableContents;
         private List<BuildableDef>  _buildables;
@@ -55,7 +55,9 @@ namespace Blueprints
             }
 
             // increment numeric suffix until we have a unique name
-            var i = 1;
+            if (BlueprintController.FindBlueprint(name) != null)
+            {
+                            var i = 1;
             while (BlueprintController.FindBlueprint(name + "_" + i) != null)
             {
                 i++;
@@ -63,6 +65,7 @@ namespace Blueprints
 
             // set name
             name = name + "_" + i;
+            }
 
             // ask for name
             if (!temporary)

@@ -14,7 +14,8 @@ namespace Blueprints
         {
             get
             {
-                _copyKey??=new KeyBind( "Fluffy.Blueprints.CopyKey".Translate(), KeyCode.C, EventModifiers.Control );
+                if (_copyKey == null)
+                    _copyKey = new KeyBind( "Fluffy.Blueprints.CopyKey".Translate(), KeyCode.C, EventModifiers.Control );
                 return _copyKey;
             }
         }

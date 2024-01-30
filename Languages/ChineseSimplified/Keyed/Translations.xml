@@ -18,4 +18,6 @@
   <Fluffy.Blueprints.NothingAvailableInBlueprint>在{0}中所有项目无法在当前科技下建造。</Fluffy.Blueprints.NothingAvailableInBlueprint>
   <Fluffy.Blueprints.XNotAvailableInBlueprint>在{0}中部分项目无法在当前科技下建造：{1}</Fluffy.Blueprints.XNotAvailableInBlueprint>
 
+	<Localghost.Blueprints.Edit>编辑蓝图</Localghost.Blueprints.Edit>
+	<Localghost.Blueprints.EditBlueprint>编辑：{0}</Localghost.Blueprints.EditBlueprint>
 </LanguageData>

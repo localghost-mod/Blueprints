@@ -32,6 +32,9 @@ namespace Blueprints
             {
                 var options = new List<FloatMenuOption>();
 
+                // edit
+                options.Add(new FloatMenuOption("Localghost.Blueprints.Edit".Translate(), () => Find.WindowStack.Add(new Window_EditBlueprint(Blueprint))));
+
                 // rename
                 options.Add( new FloatMenuOption( "Fluffy.Blueprints.Rename".Translate(),
                                                   delegate
@@ -147,6 +150,8 @@ namespace Blueprints
 
         public override void DrawPanelReadout( ref float curY, float width )
         {
+            base.DrawPanelReadout(ref curY, width);
+            return;
             // we need the window's size to be able to do a scrollbar, but are not directly given that size.
             var outRect = ArchitectCategoryTab.InfoRect.AtZero();
 
