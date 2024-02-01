@@ -13,7 +13,7 @@ namespace Blueprints
     public class Blueprint : IExposable
     {
         // regex for valid file names. Should allow all 'normal' characters, where normal (i.e. \w) differs per localization.
-        private static readonly Regex ValidNameRegex = new Regex(@"^[\w\s\(\)]+$");
+        private static readonly Regex ValidNameRegex = new Regex(@"^[\w\s\(\)\-]+$");
 
         private List<BuildableInfo> _availableContents;
         private List<BuildableDef>  _buildables;
