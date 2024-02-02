@@ -12,15 +12,13 @@ namespace Blueprints
 {
     public class Blueprint : IExposable
     {
-        // regex for valid file names. Should allow all 'normal' characters, where normal (i.e. \w) differs per localization.
-        private static readonly Regex ValidNameRegex = new Regex(@"^[\w\s\(\)\-]+$");
 
         private List<BuildableInfo> _availableContents;
         private List<BuildableDef>  _buildables;
         private List<ThingDefCount> _costlist;
 
         private HashSet<FailReason>                           _failReasonsMentioned = new HashSet<FailReason>();
-        private Dictionary<BuildableDef, List<BuildableInfo>> _groupedBuildables;
+        private Dictionary<(BuildableDef, ThingDef), List<BuildableInfo>> _groupedBuildables;
         private IntVec2                                       _size;
 
         public List<BuildableInfo> contents;
@@ -116,7 +114,7 @@ namespace Blueprints
             }
         }
 
-        public Dictionary<BuildableDef, List<BuildableInfo>> GroupedBuildables
+        public Dictionary<(BuildableDef, ThingDef), List<BuildableInfo>> GroupedBuildables
         {
             get
             {
@@ -127,11 +125,14 @@ namespace Blueprints
                 }
 
                 // create and cache list
-                var dict = new Dictionary<BuildableDef, List<BuildableInfo>>();
+                var dict = new Dictionary<(BuildableDef, ThingDef), List<BuildableInfo>>();
 
-                foreach (var buildable in Buildables.Distinct())
+                foreach(var content in contents)
                 {
-                    dict.Add(buildable, AvailableContents.Where(bi => bi.BuildableDef == buildable).ToList());
+                    var key = (content.BuildableDef, content.Stuff);
+                    if (!dict.ContainsKey(key))
+                        dict.Add(key, new List<BuildableInfo>());
+                    dict[key].Add(content);
                 }
 
                 _groupedBuildables = dict;
@@ -168,7 +169,7 @@ namespace Blueprints
 
         public static bool CouldBeValidBlueprintName(string name)
         {
-            return ValidNameRegex.IsMatch(name);
+            return true;
         }
 
         public static void Create(IEnumerable<IntVec3> cells, Map map)
@@ -338,9 +339,9 @@ namespace Blueprints
             }
         }
 
-        public void DrawStuffMenu(BuildableDef buildable)
+        public void DrawStuffMenu((BuildableDef, ThingDef) info)
         {
-            var thing = buildable as ThingDef;
+            var thing = info.Item1 as ThingDef;
             if (thing == null || thing.costStuffCount <= 0 || thing.stuffCategories.NullOrEmpty())
             {
                 return;
@@ -359,10 +360,22 @@ namespace Blueprints
             {
                 options.Add(new FloatMenuOption(
                                 stuff.LabelCap + " (" + Find.CurrentMap.resourceCounter.GetCount(stuff) + ")",
-                                delegate { SetStuffFor(buildable, stuff); }));
+                                delegate { SetStuffFor(info, stuff); }));
             }
 
             Find.WindowStack.Add(new FloatMenu(options));
+        }
+        public void DrawDesignatorDropdownMenu((BuildableDef, ThingDef) info)
+        {
+            Find.WindowStack.Add(new FloatMenu(
+                info.Item1.Dropdown().Select(buildable => new FloatMenuOption(
+                    buildable.LabelCap,
+                    () => SetBuildableFor(info, buildable)
+                    )).ToList()
+                ));
+        }
+        public void DrawColorSelectionMenu((BuildableDef, ThingDef) info)
+        {
         }
 
         public void Flip()
@@ -418,10 +431,10 @@ namespace Blueprints
             }
         }
 
-        private void SetStuffFor(BuildableDef buildableDef, ThingDef stuff)
+        private void SetStuffFor((BuildableDef, ThingDef) info, ThingDef stuff)
         {
             // get all buildables of this type
-            var buildables = contents.Where(bi => bi.BuildableDef == buildableDef);
+            var buildables = contents.Where(bi => (bi.BuildableDef, bi.Stuff) == info);
 
             // set them to use the new stuff def
             foreach (var buildable in buildables)
@@ -430,6 +443,14 @@ namespace Blueprints
             }
 
             // reset caches
+            RecacheBuildables();
+        }
+        private void SetBuildableFor((BuildableDef, ThingDef) info, BuildableDef buildable)
+        {
+            var buildables = contents.Where(bi => (bi.BuildableDef, bi.Stuff) == info);
+            foreach (var _buildable in buildables)
+                _buildable.BuildableDef = buildable;
+
             RecacheBuildables();
         }
 

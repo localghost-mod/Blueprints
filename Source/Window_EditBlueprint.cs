@@ -53,7 +53,7 @@ namespace Blueprints
                     var label =
                         buildables.Value.First().Stuff.LabelAsStuff.CapitalizeFirst()
                         + " "
-                        + buildables.Key.label;
+                        + buildables.Key.Item1.label;
 
                     var iconRect = new Rect(curX, curY, 12f, 12f);
                     curX += 16f;
@@ -72,10 +72,53 @@ namespace Blueprints
                     if (Widgets.ButtonInvisible(buttonRect))
                         _blueprint.DrawStuffMenu(buildables.Key);
                 }
+                else if (!buildables.Value.First().BuildableDef.Dropdown().EnumerableNullOrEmpty())
+                {
+                    var label = buildables.Key.Item1.LabelCap;
+                    
+                    var iconRect = new Rect(curX, curY, 12f, 12f);
+                    curX += 16f;
+
+                    height = Text.CalcHeight(label, width - curX);
+                    var labelRect = new Rect(curX, curY, width - curX, height);
+                    var buttonRect = new Rect(curX - 16f, curY, width - curX + 16f, height);
+                    if (Mouse.IsOver(buttonRect))
+                    {
+                        GUI.DrawTexture(buttonRect, TexUI.HighlightTex);
+                        GUI.color = GenUI.MouseoverColor;
+                    }
+                    GUI.DrawTexture(iconRect, Resources.Icon_Edit);
+                    GUI.color = Color.white;
+                    Widgets.Label(labelRect, label);
+                    if (Widgets.ButtonInvisible(buttonRect))
+                        _blueprint.DrawDesignatorDropdownMenu(buildables.Key);
+                }
+                else if (false)
+                {
+                    var label = buildables.Key.Item1.LabelCap;
+
+                    var iconRect = new Rect(curX, curY, 12f, 12f);
+                    curX += 16f;
+
+                    height = Text.CalcHeight(label, width - curX);
+                    var labelRect = new Rect(curX, curY, width - curX, height);
+                    var buttonRect = new Rect(curX - 16f, curY, width - curX + 16f, height);
+                    if (Mouse.IsOver(buttonRect))
+                    {
+                        GUI.DrawTexture(buttonRect, TexUI.HighlightTex);
+                        GUI.color = GenUI.MouseoverColor;
+                    }
+                    GUI.DrawTexture(iconRect, Resources.Icon_Edit);
+                    GUI.color = Color.white;
+                    Widgets.Label(labelRect, label);
+                    if (Widgets.ButtonInvisible(buttonRect))
+                        _blueprint.DrawDesignatorDropdownMenu(buildables.Key);
+
+                }
                 else
                 {
                     var labelWidth = width - curX;
-                    var label = buildables.Key.LabelCap;
+                    var label = buildables.Key.Item1.LabelCap;
                     height = Text.CalcHeight(label, labelWidth);
                     Widgets.Label(new Rect(curX, curY, labelWidth, height), label);
                 }

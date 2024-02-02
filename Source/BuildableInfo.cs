@@ -68,6 +68,14 @@ namespace Blueprints
 
                 return _buildableDef;
             }
+            set
+            {
+                if (value is ThingDef)
+                    _buildableDef = _thingDef = (ThingDef) value;
+                else
+                    _buildableDef = _terrainDef = (TerrainDef) value;
+                _designator = null;
+            }
         }
 
         public Designator_Build Designator

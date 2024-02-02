@@ -153,10 +153,12 @@ namespace Blueprints
         private static string FullFilePath( string name )
         {
 #if DEBUG
-            Log.Message( Path.Combine( BlueprintSaveLocation, name + BlueprintSaveExtension ) );
+            Log.Message( Path.Combine( BlueprintSaveLocation, ToFileName(name) + BlueprintSaveExtension ) );
 #endif
-            return Path.Combine( BlueprintSaveLocation, name + BlueprintSaveExtension );
+            return Path.Combine( BlueprintSaveLocation, ToFileName(name) + BlueprintSaveExtension );
         }
+
+        private static string ToFileName(string name) => string.Concat(name.Split(Path.GetInvalidFileNameChars()));
 
         internal static bool FileExists( string name )
         {

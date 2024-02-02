@@ -9,10 +9,7 @@ namespace Blueprints
 {
     public class Designator_Blueprint : Designator
     {
-        private readonly float   _lineOffset = -0f;
         private          float   _middleMouseDownTime;
-        private          float   _panelHeight    = 999f;
-        private          Vector2 _scrollPosition = Vector2.zero;
 
         public Designator_Blueprint( Blueprint blueprint )
         {
@@ -146,127 +143,6 @@ namespace Blueprints
                 Text.Anchor = TextAnchor.UpperLeft;
                 Text.Font   = GameFont.Small;
             } );
-        }
-
-        public override void DrawPanelReadout( ref float curY, float width )
-        {
-            base.DrawPanelReadout(ref curY, width);
-            return;
-            // we need the window's size to be able to do a scrollbar, but are not directly given that size.
-            var outRect = ArchitectCategoryTab.InfoRect.AtZero();
-
-            // our window actually starts from curY
-            outRect.yMin = curY;
-
-            // our contents height is given by final curY - which we conveniently saved
-            var viewRect = new Rect( 0f, 0f, width, _panelHeight );
-
-            // if contents are larger than available canvas, leave some room for scrollbar
-            if ( viewRect.height > outRect.height )
-            {
-                outRect.width -= 16f;
-                width         -= 16f;
-            }
-
-            // since we're going to work in new GUI group (through the scrollview), we'll need to keep track of
-            // our own relative Y position.
-            var oldY = curY;
-            curY = 0f;
-
-            // start scrollrect
-            Widgets.BeginScrollView( outRect, ref _scrollPosition, viewRect );
-
-            // list of objects to be build
-            Text.Font = GameFont.Tiny;
-            foreach ( var buildables in Blueprint.GroupedBuildables )
-            {
-                // count
-                var curX = 5f;
-                Widgets.Label( new Rect( 5f, curY, width * .2f, 100f ), buildables.Value.Count + "x" );
-                curX += width * .2f;
-
-                // stuff selector
-                var height = 0f;
-                if ( buildables.Value.First().Stuff != null )
-                {
-                    var label = buildables.Value.First().Stuff.LabelAsStuff.CapitalizeFirst() + " " +
-                                buildables.Key.label;
-
-                    var iconRect = new Rect( curX, curY, 12f, 12f );
-                    curX += 16f;
-
-                    height = Text.CalcHeight( label, width - curX ) + _lineOffset;
-                    var labelRect = new Rect( curX, curY, width - curX, height );
-                    var buttonRect = new Rect( curX   - 16f, curY, width - curX + 16f,
-                                               height + _lineOffset );
-
-                    if ( Mouse.IsOver( buttonRect ) )
-                    {
-                        GUI.DrawTexture( buttonRect, TexUI.HighlightTex );
-                        GUI.color = GenUI.MouseoverColor;
-                    }
-
-                    GUI.DrawTexture( iconRect, Resources.Icon_Edit );
-                    GUI.color = Color.white;
-                    Widgets.Label( labelRect, label );
-                    if ( Widgets.ButtonInvisible( buttonRect ) )
-                        Blueprint.DrawStuffMenu( buildables.Key );
-                }
-                else
-                {
-                    // label
-                    var labelWidth = width - curX;
-                    var label      = buildables.Key.LabelCap;
-                    height = Text.CalcHeight( label, labelWidth ) + _lineOffset;
-                    Widgets.Label( new Rect( curX, curY, labelWidth, height ), label );
-                }
-
-                // next line
-                curY += height + _lineOffset;
-            }
-
-            // complete cost list
-            curY      += 12f;
-            Text.Font =  GameFont.Small;
-            Widgets.Label( new Rect( 0f, curY, width, 24f ), "Fluffy.Blueprint.Cost".Translate() );
-            curY += 24f;
-
-            Text.Font = GameFont.Tiny;
-            var costlist = Blueprint.CostListAdjusted;
-            for ( var i = 0; i < costlist.Count; i++ )
-            {
-                var       thingCount = costlist[i];
-                Texture2D image;
-                if ( thingCount.ThingDef == null )
-                    image = BaseContent.BadTex;
-                else
-                    image = thingCount.ThingDef.uiIcon;
-                GUI.DrawTexture( new Rect( 0f, curY, 20f, 20f ), image );
-                if ( thingCount.ThingDef !=
-                     null &&
-                     thingCount.ThingDef.resourceReadoutPriority !=
-                     ResourceCountPriority.Uncounted &&
-                     Find.CurrentMap.resourceCounter.GetCount( thingCount.ThingDef ) < thingCount.Count )
-                    GUI.color = Color.red;
-                Widgets.Label( new Rect( 26f, curY + 2f, 50f, 100f ), thingCount.Count.ToString() );
-                GUI.color = Color.white;
-                string text;
-                if ( thingCount.ThingDef == null )
-                    text = "(" + "UnchosenStuff".Translate() + ")";
-                else
-                    text = thingCount.ThingDef.LabelCap;
-                var height = Text.CalcHeight( text, width - 60f ) - 2f;
-                Widgets.Label( new Rect( 60f, curY + 2f, width - 60f, height ), text );
-                curY += height + _lineOffset;
-            }
-
-            Widgets.EndScrollView();
-
-            _panelHeight = curY;
-
-            // need to give some extra offset to properly align description.
-            // also, add back in our internal offset
-            curY += 28f + oldY;
         }
 
         public override bool GroupsWith( Gizmo other )
