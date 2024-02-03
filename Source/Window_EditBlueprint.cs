@@ -23,10 +23,10 @@ namespace Blueprints
         public float scrollviewHeight =>
             Text.LineHeightOf(GameFont.Medium)
             + 10f
-            + Text.LineHeightOf(GameFont.Small) * _blueprint.GroupedBuildables.Count
+            + Text.LineHeightOf(GameFont.Small) * _blueprint.GroupedBuildables().Count
             + 12f
             + 24f
-            + Text.LineHeightOf(GameFont.Small) * _blueprint.CostListAdjusted.Count;
+            + Text.LineHeightOf(GameFont.Small) * _blueprint.CostListAdjusted().Count();
 
         public override void DoWindowContents(Rect inRect)
         {
@@ -41,10 +41,11 @@ namespace Blueprints
             Widgets.Label(titleRect, title);
             var curY = Text.LineHeight + 10f;
             Text.Font = GameFont.Small;
-            foreach (var buildables in _blueprint.GroupedBuildables)
+            foreach (var buildables in _blueprint.GroupedBuildables())
             {
+                GUI.color = buildables.Value.First().Designator.Visible ? Color.white : Color.gray;
                 var curX = 5f;
-                Widgets.Label(new Rect(5f, curY, width * .2f, 100f), buildables.Value.Count + "x");
+                Widgets.Label(new Rect(5f, curY, width * .2f, 100f), buildables.Value.Count + "×");
                 curX += width * .2f;
 
                 var height = 0f;
@@ -67,7 +68,6 @@ namespace Blueprints
                         GUI.color = GenUI.MouseoverColor;
                     }
                     GUI.DrawTexture(iconRect, Resources.Icon_Edit);
-                    GUI.color = Color.white;
                     Widgets.Label(labelRect, label);
                     if (Widgets.ButtonInvisible(buttonRect))
                         _blueprint.DrawStuffMenu(buildables.Key);
@@ -88,32 +88,9 @@ namespace Blueprints
                         GUI.color = GenUI.MouseoverColor;
                     }
                     GUI.DrawTexture(iconRect, Resources.Icon_Edit);
-                    GUI.color = Color.white;
                     Widgets.Label(labelRect, label);
                     if (Widgets.ButtonInvisible(buttonRect))
                         _blueprint.DrawDesignatorDropdownMenu(buildables.Key);
-                }
-                else if (false)
-                {
-                    var label = buildables.Key.Item1.LabelCap;
-
-                    var iconRect = new Rect(curX, curY, 12f, 12f);
-                    curX += 16f;
-
-                    height = Text.CalcHeight(label, width - curX);
-                    var labelRect = new Rect(curX, curY, width - curX, height);
-                    var buttonRect = new Rect(curX - 16f, curY, width - curX + 16f, height);
-                    if (Mouse.IsOver(buttonRect))
-                    {
-                        GUI.DrawTexture(buttonRect, TexUI.HighlightTex);
-                        GUI.color = GenUI.MouseoverColor;
-                    }
-                    GUI.DrawTexture(iconRect, Resources.Icon_Edit);
-                    GUI.color = Color.white;
-                    Widgets.Label(labelRect, label);
-                    if (Widgets.ButtonInvisible(buttonRect))
-                        _blueprint.DrawDesignatorDropdownMenu(buildables.Key);
-
                 }
                 else
                 {
@@ -127,37 +104,30 @@ namespace Blueprints
 
             curY += 12f;
             Text.Font = GameFont.Small;
+            GUI.color = Color.white;
             Widgets.Label(new Rect(0f, curY, width, 24f), "Fluffy.Blueprint.Cost".Translate());
             curY += 24f;
 
             Text.Font = GameFont.Small;
-            var costlist = _blueprint.CostListAdjusted;
-            for (var i = 0; i < costlist.Count; i++)
+            var costlist = _blueprint.CostListAdjusted();
+            var costlistAvailable = _blueprint.CostListAdjusted(Availability.Available);
+            foreach (var thingCount in costlist)
             {
-                var thingCount = costlist[i];
-                Texture2D image;
-                if (thingCount.ThingDef == null)
-                    image = BaseContent.BadTex;
-                else
-                    image = thingCount.ThingDef.uiIcon;
+                var count = thingCount.Count;
+                var thingDef = thingCount.ThingDef;
+                Texture2D image = thingCount.ThingDef.uiIcon;
+                var countAvailable = costlistAvailable.FirstOrFallback(defcount => defcount.ThingDef == thingDef, new ThingDefCount(thingDef, 0)).Count;
+                var countMap = Find.CurrentMap.resourceCounter.GetCount(thingCount.ThingDef);
                 GUI.DrawTexture(new Rect(0f, curY, 20f, 20f), image);
-                if (
-                    thingCount.ThingDef != null
-                    && thingCount.ThingDef.resourceReadoutPriority
-                        != ResourceCountPriority.Uncounted
-                    && Find.CurrentMap.resourceCounter.GetCount(thingCount.ThingDef)
-                        < thingCount.Count
-                )
-                    GUI.color = Color.red;
-                Widgets.Label(new Rect(26f, curY + 2f, 50f, 100f), thingCount.Count.ToString());
-                GUI.color = Color.white;
-                string text;
-                if (thingCount.ThingDef == null)
-                    text = "(" + "UnchosenStuff".Translate() + ")";
-                else
-                    text = thingCount.ThingDef.LabelCap;
-                var height = Text.CalcHeight(text, width - 60f) - 2f;
-                Widgets.Label(new Rect(60f, curY + 2f, width - 60f, height), text);
+                var label = count.ToString().Colorize(count <= countMap ? Color.green : Color.red);
+                if (countAvailable < count)
+                    label = ("(" + countAvailable.ToString().Colorize(countAvailable <= countMap ? (Color.green + Color.black) / 2 : (Color.red + Color.black) / 2) + ") ") + label;
+                var curX = 26f;
+                Widgets.Label(new Rect(curX, curY + 2f, width *.2f, 50f), label);
+                curX += width * .2f + 10f;
+                string text = thingCount.ThingDef.LabelCap;
+                var height = Text.CalcHeight(text, width - curX) - 2f;
+                Widgets.Label(new Rect(curX, curY + 2f, width - curX, height), text);
                 curY += height;
             }
 
