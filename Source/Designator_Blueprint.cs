@@ -22,6 +22,11 @@ namespace Blueprints
 
         public override int DraggableDimensions => 0;
         public override string Label => Blueprint.name;
+        public override void SelectedProcessInput(Event ev)
+        {
+            base.SelectedProcessInput(ev);
+            HandleRotationShortcuts();
+        }
 
         public override IEnumerable<FloatMenuOption> RightClickFloatMenuOptions
         {
@@ -134,7 +139,6 @@ namespace Blueprints
             );
 
             var winRect = new Rect(leftX, bottomY - height, width, height);
-            HandleRotationShortcuts();
 
             Find.WindowStack.ImmediateWindow(
                 73095,
