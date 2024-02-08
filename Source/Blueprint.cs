@@ -21,7 +21,6 @@ namespace Blueprints
     public class Blueprint : IExposable
     {
         private HashSet<FailReason> _failReasonsMentioned = new HashSet<FailReason>();
-        private Dictionary<(BuildableDef, ThingDef), List<BuildableInfo>> _groupedBuildables;
         private IntVec2 _size;
 
         private List<BuildableInfo> _contents;
