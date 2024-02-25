@@ -59,3 +59,4 @@ Source/BetterAnimalsTab/obj/Debug/BetterAnimalsTab.pdb
 *.pxd
 *.pdb
 /Source/Blueprints/Blueprints.sln.DotSettings.user
+.csharpierrc
