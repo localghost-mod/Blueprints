@@ -9,20 +9,17 @@ namespace Blueprints
 {
     public class MapComponent_Copy : MapComponent
     {
-        public MapComponent_Copy( Map map ) : base( map )
-        {
-        }
+        public MapComponent_Copy(Map map)
+            : base(map) { }
 
-        public static bool Valid =>
-            Find.Selector.SelectedObjects.OfType<Thing>().Count( b => b.IsValidBlueprintThing() ) > 2;
+        public static bool Valid => Find.Selector.SelectedObjects.OfType<Thing>().Count(b => b.IsValidBlueprintThing()) > 2;
 
         public override void MapComponentOnGUI()
         {
-            if ( Mod.Settings.CopyKey.JustPressed && Valid )
+            if (Event.current.type == EventType.KeyDown && Event.current.keyCode == KeyCode.C && Event.current.control && Valid)
             {
                 Event.current.Use();
-                Blueprint.Create( Find.Selector.SelectedObjects.OfType<Thing>().Where( b => b.IsValidBlueprintThing() ),
-                                  true );
+                Blueprint.Create(Find.Selector.SelectedObjects.OfType<Thing>().Where(b => b.IsValidBlueprintThing()), true);
             }
         }
     }

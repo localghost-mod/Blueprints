@@ -1,8 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Verse;
 
 namespace Blueprints
@@ -15,8 +12,6 @@ namespace Blueprints
             .Where(def => def.BuildableByPlayer);
 
         public static IEnumerable<BuildableDef> Dropdown(this BuildableDef def) =>
-            def.designatorDropdown == null
-                ? null
-                : _buildableDefs.Where(_def => _def.designatorDropdown == def.designatorDropdown);
+            def.designatorDropdown == null ? null : _buildableDefs.Where(_def => _def.designatorDropdown == def.designatorDropdown);
     }
 }

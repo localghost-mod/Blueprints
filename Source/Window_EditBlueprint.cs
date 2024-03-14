@@ -31,11 +31,7 @@ namespace Blueprints
         public override void DoWindowContents(Rect inRect)
         {
             var width = inRect.width - 16f;
-            Widgets.BeginScrollView(
-                inRect,
-                ref _scrollPosition,
-                new Rect(0f, 0f, width, scrollviewHeight)
-            );
+            Widgets.BeginScrollView(inRect, ref _scrollPosition, new Rect(0f, 0f, width, scrollviewHeight));
             Text.Font = GameFont.Medium;
             Rect titleRect = inRect.TopPartPixels(Text.LineHeight).AtZero();
             Widgets.Label(titleRect, title);
@@ -51,10 +47,7 @@ namespace Blueprints
                 var height = 0f;
                 if (buildables.Value.First().Stuff != null)
                 {
-                    var label =
-                        buildables.Value.First().Stuff.LabelAsStuff.CapitalizeFirst()
-                        + " "
-                        + buildables.Key.Item1.label;
+                    var label = buildables.Value.First().Stuff.LabelAsStuff.CapitalizeFirst() + " " + buildables.Key.Item1.label;
 
                     var iconRect = new Rect(curX, curY, 12f, 12f);
                     curX += 16f;
@@ -75,7 +68,7 @@ namespace Blueprints
                 else if (!buildables.Value.First().BuildableDef.Dropdown().EnumerableNullOrEmpty())
                 {
                     var label = buildables.Key.Item1.LabelCap;
-                    
+
                     var iconRect = new Rect(curX, curY, 12f, 12f);
                     curX += 16f;
 
@@ -123,7 +116,7 @@ namespace Blueprints
                 if (countAvailable < count)
                     label = ("(" + countAvailable.ToString().Colorize(countAvailable <= countMap ? (Color.green + Color.black) / 2 : (Color.red + Color.black) / 2) + ") ") + label;
                 var curX = 26f;
-                Widgets.Label(new Rect(curX, curY + 2f, width *.2f, 50f), label);
+                Widgets.Label(new Rect(curX, curY + 2f, width * .2f, 50f), label);
                 curX += width * .2f + 10f;
                 string text = thingCount.ThingDef.LabelCap;
                 var height = Text.CalcHeight(text, width - curX) - 2f;

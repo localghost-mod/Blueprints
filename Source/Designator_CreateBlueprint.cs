@@ -10,14 +10,14 @@ namespace Blueprints
     {
         public Designator_CreateBlueprint()
         {
-            icon             = Resources.Icon_AddBlueprint;
-            defaultLabel     = "Fluffy.Blueprints.Create".Translate();
-            defaultDesc      = "Fluffy.Blueprints.CreateHelp".Translate();
-            useMouseIcon     = true;
+            icon = Resources.Icon_AddBlueprint;
+            defaultLabel = "Fluffy.Blueprints.Create".Translate();
+            defaultDesc = "Fluffy.Blueprints.CreateHelp".Translate();
+            useMouseIcon = true;
             soundDragChanged = SoundDefOf.Designate_DragStandard_Changed;
             soundDragSustain = SoundDefOf.Designate_DragStandard;
-            soundSucceeded   = SoundDefOf.Designate_PlanAdd;
-            tutorTag         = "Blueprint";
+            soundSucceeded = SoundDefOf.Designate_PlanAdd;
+            tutorTag = "Blueprint";
         }
 
         public override int DraggableDimensions => 2;
@@ -28,42 +28,36 @@ namespace Blueprints
             {
                 var options = new List<FloatMenuOption>();
 
-                foreach ( var file in BlueprintController.GetSavedFilesList() )
+                foreach (var file in BlueprintController.GetSavedFilesList())
                 {
-                    var name = Path.GetFileNameWithoutExtension( file.Name );
-                    if ( BlueprintController.FindBlueprint( name ) == null )
-                        options.Add( new FloatMenuOption( "Fluffy.Blueprints.LoadFromXML".Translate( name ),
-                                                          delegate
-                                                          {
-                                                              BlueprintController.Add( BlueprintController.LoadFromXML( file.Name ) );
-                                                          } ) );
+                    var name = Path.GetFileNameWithoutExtension(file.Name);
+                    if (BlueprintController.FindBlueprint(name) == null)
+                        options.Add(
+                            new FloatMenuOption(
+                                "Fluffy.Blueprints.LoadFromXML".Translate(name),
+                                delegate
+                                {
+                                    BlueprintController.Add(BlueprintController.LoadFromXML(file.Name));
+                                }
+                            )
+                        );
                 }
-
-                if ( options.NullOrEmpty() )
-                    Messages.Message( "Fluffy.Blueprints.NoStoredBlueprints".Translate(),
-                                      MessageTypeDefOf.RejectInput );
+                if (options.NullOrEmpty())
+                    Messages.Message("Fluffy.Blueprints.NoStoredBlueprints".Translate(), MessageTypeDefOf.RejectInput);
                 return options;
             }
         }
 
-        public override AcceptanceReport CanDesignateCell( IntVec3 loc )
+        public override AcceptanceReport CanDesignateCell(IntVec3 loc)
         {
-            var things = loc.GetThingList( Map );
-            return loc.InBounds( Map ) &&
-                   !loc.Fogged( Map )  &&
-                   ( loc.GetTerrain( Map ).IsValidBlueprintTerrain() ||
-                     !things.NullOrEmpty() &&
-                     things.Any( thing => thing.IsValidBlueprintThing() ) );
+            var things = loc.GetThingList(Map);
+            return loc.InBounds(Map)
+                && !loc.Fogged(Map)
+                && (loc.GetTerrain(Map).IsValidBlueprintTerrain() || !things.NullOrEmpty() && things.Any(thing => thing.IsValidBlueprintThing()));
         }
 
-        public override void RenderHighlight( List<IntVec3> dragCells )
-        {
-            DesignatorUtility.RenderHighlightOverSelectableCells( this, dragCells );
-        }
+        public override void RenderHighlight(List<IntVec3> dragCells) => DesignatorUtility.RenderHighlightOverSelectableCells(this, dragCells);
 
-        public override void DesignateMultiCell( IEnumerable<IntVec3> cells )
-        {
-            Blueprint.Create( cells, Map );
-        }
+        public override void DesignateMultiCell(IEnumerable<IntVec3> cells) => Blueprint.Create(cells, Map);
     }
 }

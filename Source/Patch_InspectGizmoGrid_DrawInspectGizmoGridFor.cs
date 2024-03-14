@@ -17,32 +17,23 @@ namespace Blueprints
         public static MethodInfo addInfo = AccessTools.Method(typeof(List<Gizmo>), nameof(List<Gizmo>.Add));
 
         public static MethodInfo clearInfo = AccessTools.Method(typeof(List<object>), "Clear");
-        public static FieldInfo  gizmoList = AccessTools.Field(typeof(InspectGizmoGrid), "gizmoList");
-        public static FieldInfo  objList   = AccessTools.Field(typeof(InspectGizmoGrid), "objList");
+        public static FieldInfo gizmoList = AccessTools.Field(typeof(InspectGizmoGrid), "gizmoList");
+        public static FieldInfo objList = AccessTools.Field(typeof(InspectGizmoGrid), "objList");
 
-        public static MethodInfo blueprintGetter = AccessTools
-                                                  .Property(typeof(Patch_InspectGizmoGrid_DrawInspectGizmoGridFor),
-                                                            nameof(BlueprintCopy))
-                                                  .GetGetMethod();
+        public static MethodInfo blueprintGetter = AccessTools.Property(typeof(Patch_InspectGizmoGrid_DrawInspectGizmoGridFor), nameof(BlueprintCopy)).GetGetMethod();
 
-
-        public static Command_CreateBlueprintCopyFromSelected BlueprintCopy =>
-            new Command_CreateBlueprintCopyFromSelected();
+        public static Command_CreateBlueprintCopyFromSelected BlueprintCopy => new Command_CreateBlueprintCopyFromSelected();
 
         public static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> _instructions)
         {
             var instructions = _instructions.ToList();
 
-
             for (var i = 0; i < instructions.Count; i++)
             {
                 yield return instructions[i];
 
-                if (i > 0 && instructions[i - 1].LoadsField(objList)
-                          && instructions[i].Calls(clearInfo)
-                          && instructions[i + 1].LoadsField(gizmoList))
+                if (i > 0 && instructions[i - 1].LoadsField(objList) && instructions[i].Calls(clearInfo) && instructions[i + 1].LoadsField(gizmoList))
                 {
-                    Debug.Message("injecting blueprint gizmo");
                     yield return new CodeInstruction(OpCodes.Ldsfld, gizmoList);
                     yield return new CodeInstruction(OpCodes.Call, blueprintGetter);
                     yield return new CodeInstruction(OpCodes.Callvirt, addInfo);

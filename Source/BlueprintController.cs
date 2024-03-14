@@ -84,9 +84,7 @@ namespace Blueprints
             if (!Instance._initialized)
                 Initialize();
 
-            return Instance._designators.FirstOrDefault(
-                    designator => (designator as Designator_Blueprint)?.Blueprint.name == name
-                ) as Designator_Blueprint;
+            return Instance._designators.FirstOrDefault(designator => (designator as Designator_Blueprint)?.Blueprint.name == name) as Designator_Blueprint;
         }
 
         public static void Initialize()
@@ -130,11 +128,7 @@ namespace Blueprints
         {
             var directoryInfo = new DirectoryInfo(BlueprintSaveLocation);
 
-            var files =
-                from f in directoryInfo.GetFiles()
-                where f.Extension == BlueprintSaveExtension
-                orderby f.LastWriteTime descending
-                select f;
+            var files = from f in directoryInfo.GetFiles() where f.Extension == BlueprintSaveExtension orderby f.LastWriteTime descending select f;
 
             return files.ToList();
         }
@@ -142,10 +136,7 @@ namespace Blueprints
         private static string GetSaveLocation()
         {
             // Get method "FolderUnderSaveData" from GenFilePaths, which is private (NonPublic) and static.
-            var Folder = typeof(GenFilePaths).GetMethod(
-                "FolderUnderSaveData",
-                BindingFlags.NonPublic | BindingFlags.Static
-            );
+            var Folder = typeof(GenFilePaths).GetMethod("FolderUnderSaveData", BindingFlags.NonPublic | BindingFlags.Static);
             if (Folder == null)
                 throw new Exception("Blueprints :: FolderUnderSaveData is null [reflection]");
 
@@ -156,15 +147,12 @@ namespace Blueprints
         private static string FullFilePath(string name)
         {
 #if DEBUG
-            Log.Message(
-                Path.Combine(BlueprintSaveLocation, ToFileName(name) + BlueprintSaveExtension)
-            );
+            Log.Message(Path.Combine(BlueprintSaveLocation, ToFileName(name) + BlueprintSaveExtension));
 #endif
             return Path.Combine(BlueprintSaveLocation, ToFileName(name) + BlueprintSaveExtension);
         }
 
-        private static string ToFileName(string name) =>
-            string.Concat(name.Split(Path.GetInvalidFileNameChars()));
+        private static string ToFileName(string name) => string.Concat(name.Split(Path.GetInvalidFileNameChars()));
 
         internal static bool FileExists(string name)
         {
@@ -202,10 +190,7 @@ namespace Blueprints
             try
             {
                 Scribe.loader.InitLoading(BlueprintSaveLocation + "/" + name);
-                ScribeMetaHeaderUtility.LoadGameDataHeader(
-                    ScribeMetaHeaderUtility.ScribeHeaderMode.Map,
-                    true
-                );
+                ScribeMetaHeaderUtility.LoadGameDataHeader(ScribeMetaHeaderUtility.ScribeHeaderMode.Map, true);
                 Scribe.EnterNode("Blueprint");
                 blueprint.ExposeData();
                 Scribe.ExitNode();

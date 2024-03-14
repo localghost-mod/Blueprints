@@ -22,6 +22,7 @@ namespace Blueprints
 
         public override int DraggableDimensions => 0;
         public override string Label => Blueprint.name;
+
         public override void SelectedProcessInput(Event ev)
         {
             base.SelectedProcessInput(ev);
@@ -35,12 +36,7 @@ namespace Blueprints
                 var options = new List<FloatMenuOption>();
 
                 // edit
-                options.Add(
-                    new FloatMenuOption(
-                        "Localghost.Blueprints.Edit".Translate(),
-                        () => Find.WindowStack.Add(new Window_EditBlueprint(Blueprint))
-                    )
-                );
+                options.Add(new FloatMenuOption("Localghost.Blueprints.Edit".Translate(), () => Find.WindowStack.Add(new Window_EditBlueprint(Blueprint))));
 
                 // rename
                 options.Add(
@@ -133,10 +129,7 @@ namespace Blueprints
             var margin = 9f;
             var topmargin = 15f;
             var numButtons = 3;
-            var button = Mathf.Min(
-                (width - (numButtons + 1) * margin) / numButtons,
-                height - topmargin
-            );
+            var button = Mathf.Min((width - (numButtons + 1) * margin) / numButtons, height - topmargin);
 
             var winRect = new Rect(leftX, bottomY - height, width, height);
 
@@ -160,7 +153,7 @@ namespace Blueprints
                     }
 
                     var flipRect = new Rect(2 * margin + button, topmargin, button, button);
-                    Widgets.Label(flipRect, KeyBindingDefOf2.Blueprint_Flip.MainKeyLabel);
+                    Widgets.Label(flipRect, "F");
                     if (Widgets.ButtonImage(flipRect, Resources.FlipTex))
                     {
                         SoundDefOf.DragSlider.PlayOneShotOnCamera();
@@ -169,10 +162,7 @@ namespace Blueprints
                     }
 
                     var rotRightRect = new Rect(3 * margin + 2 * button, topmargin, button, button);
-                    Widgets.Label(
-                        rotRightRect,
-                        KeyBindingDefOf.Designator_RotateRight.MainKeyLabel
-                    );
+                    Widgets.Label(rotRightRect, KeyBindingDefOf.Designator_RotateRight.MainKeyLabel);
                     if (Widgets.ButtonImage(rotRightRect, Resources.RotRightTex))
                     {
                         SoundDefOf.DragSlider.PlayOneShotOnCamera();
@@ -198,23 +188,14 @@ namespace Blueprints
             base.Selected();
             if (!Blueprint.Contents(Availability.Available).Any())
             {
-                Messages.Message(
-                    "Fluffy.Blueprints.NothingAvailableInBlueprint".Translate(Blueprint.name),
-                    MessageTypeDefOf.RejectInput
-                );
+                Messages.Message("Fluffy.Blueprints.NothingAvailableInBlueprint".Translate(Blueprint.name), MessageTypeDefOf.RejectInput);
             }
             else
             {
-                var unavailable = Blueprint
-                    .Contents(Availability.Unavailable)
-                    .Select(item => item.BuildableDef.label)
-                    .Distinct();
+                var unavailable = Blueprint.Contents(Availability.Unavailable).Select(item => item.BuildableDef.label).Distinct();
                 if (unavailable.Any())
                     Messages.Message(
-                        "Fluffy.Blueprints.XNotAvailableInBlueprint".Translate(
-                            Blueprint.name,
-                            string.Join(", ", unavailable.ToArray())
-                        ),
+                        "Fluffy.Blueprints.XNotAvailableInBlueprint".Translate(Blueprint.name, string.Join(", ", unavailable.ToArray())),
                         MessageTypeDefOf.CautionInput
                     );
             }
@@ -242,10 +223,7 @@ namespace Blueprints
                     _middleMouseDownTime = Time.realtimeSinceStartup;
                 }
 
-                if (
-                    Event.current.type == EventType.MouseUp
-                    && Time.realtimeSinceStartup - _middleMouseDownTime < 0.15f
-                )
+                if (Event.current.type == EventType.MouseUp && Time.realtimeSinceStartup - _middleMouseDownTime < 0.15f)
                     rotationDirection = RotationDirection.Clockwise;
             }
 
@@ -253,7 +231,7 @@ namespace Blueprints
                 rotationDirection = RotationDirection.Clockwise;
             if (KeyBindingDefOf.Designator_RotateLeft.KeyDownEvent)
                 rotationDirection = RotationDirection.Counterclockwise;
-            if (KeyBindingDefOf2.Blueprint_Flip.KeyDownEvent)
+            if (Event.current.type == EventType.KeyDown && Event.current.keyCode == KeyCode.F)
             {
                 SoundDefOf.DragSlider.PlayOneShotOnCamera();
                 Blueprint.Flip();
