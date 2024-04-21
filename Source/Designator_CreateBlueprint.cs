@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using RimWorld;
 using Verse;
@@ -8,6 +7,7 @@ namespace Blueprints
 {
     public class Designator_CreateBlueprint : Designator
     {
+        static BlueprintController BlueprintController => Find.World.GetComponent<BlueprintController>();
         public Designator_CreateBlueprint()
         {
             icon = Resources.Icon_AddBlueprint;
@@ -23,30 +23,7 @@ namespace Blueprints
         public override int DraggableDimensions => 2;
 
         public override IEnumerable<FloatMenuOption> RightClickFloatMenuOptions
-        {
-            get
-            {
-                var options = new List<FloatMenuOption>();
-
-                foreach (var file in BlueprintController.GetSavedFilesList())
-                {
-                    var name = Path.GetFileNameWithoutExtension(file.Name);
-                    if (BlueprintController.FindBlueprint(name) == null)
-                        options.Add(
-                            new FloatMenuOption(
-                                "Fluffy.Blueprints.LoadFromXML".Translate(name),
-                                delegate
-                                {
-                                    BlueprintController.Add(BlueprintController.LoadFromXML(file.Name));
-                                }
-                            )
-                        );
-                }
-                if (options.NullOrEmpty())
-                    Messages.Message("Fluffy.Blueprints.NoStoredBlueprints".Translate(), MessageTypeDefOf.RejectInput);
-                return options;
-            }
-        }
+            => BlueprintController.UnloadedBlueprints.Select(blueprint => new FloatMenuOption("Fluffy.Blueprints.LoadFromXML".Translate(blueprint.name), () => BlueprintController.Add(blueprint)));
 
         public override AcceptanceReport CanDesignateCell(IntVec3 loc)
         {

@@ -159,9 +159,9 @@ namespace Blueprints
 
         public void ExposeData()
         {
-            Scribe_Defs.Look(ref _thingDef, "ThingDef");
-            Scribe_Defs.Look(ref _stuff, "Stuff");
-            Scribe_Defs.Look(ref _terrainDef, "TerrainDef");
+            Utils.SafeLook(ref _thingDef, "ThingDef");
+            Utils.SafeLook(ref _stuff, "Stuff");
+            Utils.SafeLook(ref _terrainDef, "TerrainDef");
             Scribe_Values.Look(ref _position, "Position");
             Scribe_Values.Look(ref _rotation, "Rotation");
         }

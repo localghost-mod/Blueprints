@@ -18,21 +18,23 @@ namespace Blueprints
 
     public class Blueprint : IExposable
     {
-        private HashSet<FailReason> _failReasonsMentioned = new HashSet<FailReason>();
-        private IntVec2 _size;
+        static BlueprintController BlueprintController => Find.World.GetComponent<BlueprintController>();
 
-        private List<BuildableInfo> _contents;
+        private HashSet<FailReason> _failReasonsMentioned = new HashSet<FailReason>();
+        private IntVec2 size;
+
+        private List<BuildableInfo> contents;
         public bool exported;
         public string name;
 
         public Blueprint() { }
 
-        public Blueprint(List<BuildableInfo> contents, IntVec2 size, string defaultName = null, bool temporary = false)
+        public Blueprint(List<BuildableInfo> contents, IntVec2 size, string name = null, bool temporary = false)
         {
             // input
-            _contents = contents;
-            name = defaultName;
-            _size = size;
+            this.contents = contents;
+            this.name = name;
+            this.size = size;
 
             // provide reference to this blueprint in all contents
             contents.ForEach(item => item.blueprint = this);
@@ -41,20 +43,17 @@ namespace Blueprints
             exported = false;
 
             // 'orrible default name
-            if (name == null || !CouldBeValidBlueprintName(name))
-                name = "Fluffy.Blueprints.DefaultBlueprintName".Translate();
+            if (name == null)
+                this.name = "Fluffy.Blueprints.DefaultBlueprintName".Translate();
 
             // increment numeric suffix until we have a unique name
-            if (BlueprintController.FindBlueprint(name) != null)
+            if (BlueprintController.HasName(this.name))
             {
                 var i = 1;
-                while (BlueprintController.FindBlueprint(name + "_" + i) != null)
-                {
-                    i++;
-                }
+                while (BlueprintController.HasName($"{this.name}_{i}"))
+                    ++i;
 
-                // set name
-                name = name + "_" + i;
+                this.name = this.name + "_" + i;
             }
 
             // ask for name
@@ -64,9 +63,9 @@ namespace Blueprints
 
         public List<BuildableInfo> Contents(Availability availability = Availability.Unset) =>
             availability == Availability.Available
-                ? _contents.Where(item => item.Designator.Visible).ToList()
+                ? contents.Where(item => item.Designator.Visible).ToList()
                 : availability == Availability.Unavailable
-                    ? _contents.Where(item => !item.Designator.Visible).ToList()
+                    ? contents.Where(item => !item.Designator.Visible).ToList()
                     : Contents(Availability.Available).Concat(Contents(Availability.Unavailable)).ToList();
 
         public List<BuildableDef> Buildables => Contents(Availability.Available).Select(item => item.BuildableDef).ToList();
@@ -83,13 +82,11 @@ namespace Blueprints
 
         public void ExposeData()
         {
-            Scribe_Collections.Look(ref _contents, "BuildableThings", LookMode.Deep, this);
+            Scribe_Collections.Look(ref contents, "BuildableThings", LookMode.Deep, this);
             Scribe_Values.Look(ref name, "Name");
-            Scribe_Values.Look(ref _size, "Size");
+            Scribe_Values.Look(ref size, "Size");
             Scribe_Values.Look(ref exported, "Exported");
         }
-
-        public static bool CouldBeValidBlueprintName(string name) => true;
 
         public static void Create(IEnumerable<IntVec3> cells, Map map)
         {
@@ -189,7 +186,15 @@ namespace Blueprints
                 BlueprintController.Add(blueprint);
         }
 
-        public void Reset() => _contents = _contents.Where(item => item.BuildableDef != null).ToList();
+        public void Reset()
+        {
+            contents = contents.Where(item => item.BuildableDef != null).ToList();
+            foreach (var item in contents)
+                if (item.BuildableDef.MadeFromStuff && item.Stuff == null)
+                    item.Stuff = DefDatabase<ThingDef>.AllDefsListForReading.First(
+                        def => def.IsStuff && !def.stuffProps.categories.Intersect(item.BuildableDef.stuffCategories).EnumerableNullOrEmpty()
+                    );
+        }
 
         public void DrawGhost(IntVec3 origin) => Contents(Availability.Available).ForEach(item => item.DrawGhost(origin));
 
@@ -223,15 +228,13 @@ namespace Blueprints
                 });
 
         public static AcceptanceReport IsValidBlueprintName(string name) =>
-            !CouldBeValidBlueprintName(name)
-                ? new AcceptanceReport("Fluffy.Blueprints.InvalidBlueprintName".Translate(name))
-                : BlueprintController.FindBlueprint(name) != null
+            BlueprintController.HasName(name)
                     ? new AcceptanceReport("Fluffy.Blueprints.NameAlreadyTaken".Translate(name))
                     : AcceptanceReport.WasAccepted;
 
         public void Rotate(RotationDirection direction)
         {
-            _size = _size.Rotated();
+            size = size.Rotated();
             foreach (var item in Contents())
             {
                 var success = item.Rotate(direction);

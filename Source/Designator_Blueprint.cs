@@ -11,6 +11,8 @@ namespace Blueprints
     {
         private float _middleMouseDownTime;
 
+        static BlueprintController BlueprintController = Find.World.GetComponent<BlueprintController>();
+
         public Designator_Blueprint(Blueprint blueprint)
         {
             Blueprint = blueprint;
@@ -33,57 +35,12 @@ namespace Blueprints
         {
             get
             {
-                var options = new List<FloatMenuOption>();
-
-                // edit
-                options.Add(new FloatMenuOption("Localghost.Blueprints.Edit".Translate(), () => Find.WindowStack.Add(new Window_EditBlueprint(Blueprint))));
-
-                // rename
-                options.Add(
-                    new FloatMenuOption(
-                        "Fluffy.Blueprints.Rename".Translate(),
-                        delegate
-                        {
-                            Find.WindowStack.Add(new Dialog_NameBlueprint(Blueprint));
-                        }
-                    )
-                );
-
-                // delete blueprint
-                options.Add(
-                    new FloatMenuOption(
-                        "Fluffy.Blueprints.Remove".Translate(),
-                        delegate
-                        {
-                            BlueprintController.Remove(this, false);
-                        }
-                    )
-                );
-
-                // delete blueprint and remove from disk
-                if (Blueprint.exported)
-                    options.Add(
-                        new FloatMenuOption(
-                            "Fluffy.Blueprints.RemoveAndDeleteXML".Translate(),
-                            delegate
-                            {
-                                BlueprintController.Remove(this, true);
-                            }
-                        )
-                    );
-                // store to xml
-                else
-                    options.Add(
-                        new FloatMenuOption(
-                            "Fluffy.Blueprints.SaveToXML".Translate(),
-                            delegate
-                            {
-                                BlueprintController.SaveToXML(Blueprint);
-                            }
-                        )
-                    );
-
-                return options;
+                yield return new FloatMenuOption("Localghost.Blueprints.Edit".Translate(), () => Find.WindowStack.Add(new Window_EditBlueprint(Blueprint)));
+                yield return new FloatMenuOption("Fluffy.Blueprints.Rename".Translate(), () => Find.WindowStack.Add(new Dialog_NameBlueprint(Blueprint)));
+                yield return new FloatMenuOption("Fluffy.Blueprints.Remove".Translate(), () => BlueprintController.Remove(this));
+                yield return Blueprint.exported ?
+                    new FloatMenuOption("Fluffy.Blueprints.RemoveAndDeleteXML".Translate(), () => BlueprintController.Remove(this, true)) :
+                    new FloatMenuOption("Fluffy.Blueprints.SaveToXML".Translate(), () => BlueprintController.Export(Blueprint));
             }
         }
 

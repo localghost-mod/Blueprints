@@ -1,248 +1,115 @@
-﻿//using CommunityCoreLibrary;
-
-using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Reflection;
 using HarmonyLib;
 using RimWorld.Planet;
 using Verse;
 
 namespace Blueprints
 {
-    public class BlueprintController : WorldComponent
+    class BlueprintController : WorldComponent
     {
-        public const string BlueprintSaveExtension = ".xml";
-        private static string _blueprintSaveLocation;
-        private static BlueprintController _instance;
-
-        private List<Blueprint> _blueprints = new List<Blueprint>();
-        private List<Designator> _designators;
-        private bool _initialized;
-
-        public BlueprintController(World world)
-            : base(world)
-        {
-            _instance = this;
-        }
-
-        public static BlueprintController Instance => _instance;
-
-        public static string BlueprintSaveLocation
+        public static readonly string SaveLocation = Path.Combine(GenFilePaths.SaveDataFolderPath, "Blueprints");
+        List<Blueprint> blueprints = new List<Blueprint>();
+        List<Blueprint> savedBlueprints = new List<Blueprint>();
+        public IEnumerable<Blueprint> UnloadedBlueprints
         {
             get
             {
-                if (_blueprintSaveLocation == null)
-                    _blueprintSaveLocation = GetSaveLocation();
-                return _blueprintSaveLocation;
+                if (!initialized)
+                    Init();
+                return savedBlueprints.Except(blueprints);
             }
         }
+        List<Designator> designators;
+        bool initialized;
 
-        public override void FinalizeInit()
+        public BlueprintController(World world)
+            : base(world) { }
+
+        public bool Exported(Blueprint blueprint) => savedBlueprints.Contains(blueprint);
+
+        public void Add(Blueprint blueprint)
         {
-            base.FinalizeInit();
-            Initialize();
-        }
-
-        public static void Add(Blueprint blueprint)
-        {
-            if (!Instance._initialized)
-                Initialize();
-
-            Instance._blueprints.Add(blueprint);
-
-            var designator = new Designator_Blueprint(blueprint);
-            Instance._designators.Add(designator);
-
-            // select the new designator
-            Find.DesignatorManager.Select(designator);
-        }
-
-        public static void Remove(Designator_Blueprint designator, bool removeFromDisk)
-        {
-            if (!Instance._initialized)
-                Initialize();
-
-            Instance._blueprints.Remove(designator.Blueprint);
-            Instance._designators.Remove(designator);
-
-            if (removeFromDisk)
-                DeleteXML(designator.Blueprint);
-        }
-
-        public static Blueprint FindBlueprint(string name)
-        {
-            if (!Instance._initialized)
-                Initialize();
-
-            return Instance._blueprints.FirstOrDefault(blueprint => blueprint.name == name);
-        }
-
-        public static Designator_Blueprint FindDesignator(string name)
-        {
-            if (!Instance._initialized)
-                Initialize();
-
-            return Instance._designators.FirstOrDefault(designator => (designator as Designator_Blueprint)?.Blueprint.name == name) as Designator_Blueprint;
-        }
-
-        public static void Initialize()
-        {
-            if (Instance._initialized)
+            if (blueprints.Contains(blueprint))
+            {
+                Log.Warning($"Try adding duplicate blueprint name: {blueprint.name}");
                 return;
-
-            // do harmony patches
-            var harmony = new Harmony("fluffy.blueprints");
-            harmony.PatchAll(Assembly.GetExecutingAssembly());
-
-            // find our designation category.
-            var desCatDef = DefDatabase<DesignationCategoryDef>.GetNamed("Blueprints");
-            if (desCatDef == null)
-                throw new Exception("Blueprints designation category not found");
-
-            // reset list of designators in blueprints tab.
-            Instance._designators = desCatDef.AllResolvedDesignators;
-            Instance._designators.Clear();
-            Instance._designators.Add(new Designator_CreateBlueprint());
-
-            foreach (var blueprint in Instance._blueprints)
-                Instance._designators.Add(new Designator_Blueprint(blueprint));
-
-            // done!
-            Instance._initialized = true;
-        }
-
-        public override void ExposeData()
-        {
-            base.ExposeData();
-            Scribe_Collections.Look(ref _blueprints, "Blueprints");
-        }
-
-        private static void DeleteXML(Blueprint blueprint)
-        {
-            File.Delete(FullFilePath(blueprint.name));
-        }
-
-        internal static List<FileInfo> GetSavedFilesList()
-        {
-            var directoryInfo = new DirectoryInfo(BlueprintSaveLocation);
-
-            var files = from f in directoryInfo.GetFiles() where f.Extension == BlueprintSaveExtension orderby f.LastWriteTime descending select f;
-
-            return files.ToList();
-        }
-
-        private static string GetSaveLocation()
-        {
-            // Get method "FolderUnderSaveData" from GenFilePaths, which is private (NonPublic) and static.
-            var Folder = typeof(GenFilePaths).GetMethod("FolderUnderSaveData", BindingFlags.NonPublic | BindingFlags.Static);
-            if (Folder == null)
-                throw new Exception("Blueprints :: FolderUnderSaveData is null [reflection]");
-
-            // Call "FolderUnderSaveData" from null parameter, since this is a static method.
-            return (string)Folder.Invoke(null, new object[] { "Blueprints" });
-        }
-
-        private static string FullFilePath(string name)
-        {
-#if DEBUG
-            Log.Message(Path.Combine(BlueprintSaveLocation, ToFileName(name) + BlueprintSaveExtension));
-#endif
-            return Path.Combine(BlueprintSaveLocation, ToFileName(name) + BlueprintSaveExtension);
-        }
-
-        private static string ToFileName(string name) => string.Concat(name.Split(Path.GetInvalidFileNameChars()));
-
-        internal static bool FileExists(string name)
-        {
-            return File.Exists(FullFilePath(name));
-        }
-
-        internal static bool TryRenameFile(Blueprint blueprint, string newName)
-        {
-            if (!FileExists(newName))
-            {
-                RenameFile(blueprint, newName);
-                return true;
             }
-
-            return false;
+            blueprints.Add(blueprint);
+            designators.Add(new Designator_Blueprint(blueprint));
         }
 
-        private static void RenameFile(Blueprint blueprint, string newName)
+        public void Import(string name)
         {
-            DeleteXML(blueprint);
-            blueprint.name = newName;
-            SaveToXML(blueprint);
+
+        }
+        public void Export(Blueprint blueprint)
+        {
+            Scribe.saver.InitSaving(blueprint.name.toBlueprintPath(), "Blueprint");
+            ScribeMetaHeaderUtility.WriteMetaHeader();
+            Scribe_Deep.Look(ref blueprint, "Blueprint");
+            Scribe.saver.FinalizeSaving();
+
+            savedBlueprints.Add(blueprint);
+            blueprint.exported = true;
         }
 
-        internal static Blueprint LoadFromXML(string name)
+        public void Delete(Blueprint blueprint)
         {
-            // set up empty blueprint
-            var blueprint = new Blueprint();
+            File.Delete(blueprint.name.toBlueprintPath());
 
-#if DEBUG
-            Log.Message("Attempting to load from: " + name);
-#endif
+            savedBlueprints.Remove(blueprint);
+            blueprint.exported = false;
+        }
 
-            // load stuff
-            try
+        public void Remove(Designator_Blueprint designator, bool delete = false)
+        {
+            blueprints.Remove(designator.Blueprint);
+            designators.Remove(designator);
+            if (delete)
+                Delete(designator.Blueprint);
+        }
+
+        public bool HasName(string name) => blueprints.Any(x => x.name == name);
+
+        public bool TryRename(Blueprint blueprint, string name)
+        {
+            if (savedBlueprints.Any(x => x.name.toBlueprintPath() == name.toBlueprintPath()))
+                return false;
+            Delete(blueprint);
+            blueprint.name = name;
+            Export(blueprint);
+            return true;
+        }
+        void Init()
+        {
+            Directory.CreateDirectory(SaveLocation);
+            var info = new DirectoryInfo(SaveLocation);
+            foreach (var file in new DirectoryInfo(SaveLocation).GetFiles().Where(file => file.Extension == ".xml").OrderByDescending(file => file.LastWriteTime))
             {
-                Scribe.loader.InitLoading(BlueprintSaveLocation + "/" + name);
-                ScribeMetaHeaderUtility.LoadGameDataHeader(ScribeMetaHeaderUtility.ScribeHeaderMode.Map, true);
+                var blueprint = new Blueprint();
+                Scribe.loader.InitLoading(file.FullName);
                 Scribe.EnterNode("Blueprint");
                 blueprint.ExposeData();
                 Scribe.ExitNode();
-            }
-            catch (Exception e)
-            {
-                Log.Error("Exception while loading blueprint: " + e);
-            }
-            finally
-            {
-                // done loading
                 Scribe.loader.FinalizeLoading();
-                Scribe.mode = LoadSaveMode.Inactive;
+                blueprint.Reset();
+                blueprint.exported = true;
+                savedBlueprints.Add(blueprint);
             }
-
-            // if a def used in the blueprint doesn't exist, exposeData will throw an error,
-            // which is fine. in addition, it'll set the field to null - which may result in problems down the road.
-            // Make sure each item in the blueprint has a def set, if not - remove it.
-            blueprint.Reset();
-
-            // return blueprint.
-            return blueprint;
+            initialized = true;
         }
-
-        public static void SaveToXML(Blueprint blueprint)
+        public override void FinalizeInit()
         {
-            try
-            {
-                try
-                {
-                    Scribe.saver.InitSaving(FullFilePath(blueprint.name), "Blueprint");
-                }
-                catch (Exception ex)
-                {
-                    GenUI.ErrorDialog("ProblemSavingFile".Translate(ex.ToString()));
-                    throw;
-                }
+            new Harmony("fluffy.blueprints").PatchAll();
+            var cat = DefDatabase<DesignationCategoryDef>.GetNamed("Blueprints");
+            designators = cat.AllResolvedDesignators;
+            foreach (var blueprint in blueprints)
+                designators.Add(new Designator_Blueprint(blueprint));
 
-                ScribeMetaHeaderUtility.WriteMetaHeader();
-                Scribe_Deep.Look(ref blueprint, "Blueprint");
-            }
-            catch (Exception ex2)
-            {
-                Log.Error("Exception while saving blueprint: " + ex2);
-            }
-            finally
-            {
-                Scribe.saver.FinalizeSaving();
-            }
-
-            // set exported flag.
-            blueprint.exported = true;
         }
+
+        public override void ExposeData() => Scribe_Collections.Look(ref blueprints, "Blueprints");
     }
 }
